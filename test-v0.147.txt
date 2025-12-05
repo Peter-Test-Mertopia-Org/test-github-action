@@ -1,0 +1,7 @@
+Test case 2: Push from release/v0.147
+
+Purpose: Verify auto-merge only targets:
+- develop
+- release/v0.148
+
+Should NOT merge to release/v0.146 (lower version)
