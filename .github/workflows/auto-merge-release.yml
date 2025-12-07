@@ -176,12 +176,24 @@ jobs:
           REPO="${{ github.repository }}"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-          if [ "$PR_EXISTED" = "true" ]; then
-            TITLE="⚠️ Auto-merge 仍有衝突待處理"
-            PR_TEXT="PR 已存在"
+          # 根據 PR 建立狀態設定標題和按鈕
+          if [ -n "$PR_URL" ]; then
+            if [ "$PR_EXISTED" = "true" ]; then
+              TITLE="⚠️ Auto-merge 仍有衝突待處理"
+              PR_TEXT="PR 已存在"
+            else
+              TITLE="🚨 Auto-merge 失敗 - 已建立 PR"
+              PR_TEXT="已建立 PR"
+            fi
+            # 有 PR URL 時顯示 PR 按鈕
+            BUTTONS='[{"text": "查看 PR", "onClick": {"openLink": {"url": "'"${PR_URL}"'"}}}, {"text": "查看 Workflow", "onClick": {"openLink": {"url": "'"${RUN_URL}"'"}}}]'
+            PR_WIDGET='{"decoratedText": {"topLabel": "'"${PR_TEXT}"'", "text": "'"${PR_URL}"'"}},'
           else
             TITLE="🚨 Auto-merge 失敗 - 需要手動處理"
-            PR_TEXT="已建立 PR"
+            PR_TEXT="無法建立 PR（權限不足）"
+            # 沒有 PR URL 時只顯示 Workflow 按鈕
+            BUTTONS='[{"text": "查看 Workflow", "onClick": {"openLink": {"url": "'"${RUN_URL}"'"}}}]'
+            PR_WIDGET='{"decoratedText": {"topLabel": "狀態", "text": "'"${PR_TEXT}"'"}},'
           fi
 
           curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
@@ -209,32 +221,10 @@ jobs:
                         "text": "${TARGET_BRANCH}"
                       }
                     },
-                    {
-                      "decoratedText": {
-                        "topLabel": "${PR_TEXT}",
-                        "text": "${PR_URL}"
-                      }
-                    },
+                    ${PR_WIDGET}
                     {
                       "buttonList": {
-                        "buttons": [
-                          {
-                            "text": "查看 PR",
-                            "onClick": {
-                              "openLink": {
-                                "url": "${PR_URL}"
-                              }
-                            }
-                          },
-                          {
-                            "text": "查看 Workflow",
-                            "onClick": {
-                              "openLink": {
-                                "url": "${RUN_URL}"
-                              }
-                            }
-                          }
-                        ]
+                        "buttons": ${BUTTONS}
                       }
                     }
                   ]
