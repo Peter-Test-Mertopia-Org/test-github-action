@@ -5,6 +5,12 @@ on:
     branches:
       - "release/v*"
 
+# 設定 GITHUB_TOKEN 權限
+permissions:
+  contents: write
+  pull-requests: write
+  workflows: write
+
 jobs:
   # 第一個 job：計算需要合併的目標分支
   calculate-targets:
